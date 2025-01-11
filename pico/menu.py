@@ -202,5 +202,63 @@ class Menu:
         while True:
             selected = self.handle_input()
             if selected:
+                try:
+                    # 运行选中的应用
+                    app_module = selected.get('module')
+                    if app_module:
+                        # 清理之前的模块
+                        from pico.system import SystemManager
+                        system = SystemManager()
+                        system.cleanup_all()
+                        
+                        # 运行新应用
+                        app = app_module(self.display, self.hw, self.colors)
+                        result = app.play()
+                        
+                        # 应用退出后清理
+                        system.cleanup_all()
+                        
+                        # 重新显示菜单
+                        self.draw_menu()
+                        continue
+                except Exception as e:
+                    print(f"Error running app: {e}")
+                    # 发生错误时也要清理
+                    from pico.system import SystemManager
+                    SystemManager().cleanup_all()
                 return selected
-            time.sleep(0.01)  # 防止CPU占用过高 
+            time.sleep(0.01)  # 防止CPU占用过高
+
+    def cleanup_modules(self):
+        """清理不需要的模块"""
+        print("\n=== Cleaning up modules ===")
+        import sys
+        import gc
+        
+        # 查找需要清理的模块
+        modules_to_remove = []
+        for module_name in list(sys.modules.keys()):
+            # 清理 apps 下的模块
+            if module_name.startswith('apps.'):
+                modules_to_remove.append(module_name)
+        
+        # 清理模块
+        for module_name in modules_to_remove:
+            try:
+                print(f"Removing module: {module_name}")
+                if module_name in sys.modules:
+                    # 如果模块有cleanup方法，先调用它
+                    module = sys.modules[module_name]
+                    if hasattr(module, 'cleanup'):
+                        try:
+                            module.cleanup()
+                        except:
+                            pass
+                    # 删除模块
+                    del sys.modules[module_name]
+            except Exception as e:
+                print(f"Error removing module {module_name}: {e}")
+        
+        # 执行垃圾回收
+        gc.collect()
+        print("=== Cleanup complete ===\n") 

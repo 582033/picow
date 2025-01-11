@@ -8,6 +8,32 @@ class SystemManager:
     def __init__(self):
         self._init_time = time.monotonic()
         self._modules = {}
+        self.wifi = None
+        self._init_wifi()
+        
+    def _init_wifi(self):
+        """初始化WiFi"""
+        print("Initializing WiFi...")
+        try:
+            from pico.wifi import PicoWifi
+            self.wifi = PicoWifi()
+            if not self.wifi.is_connected():
+                print("WiFi not connected, attempting to connect...")
+                if not self.wifi.connect():
+                    print("Failed to connect to WiFi")
+                    self.wifi = None
+                    print("System initialized with no network connection")
+                    return
+            print("WiFi connected successfully")
+        except Exception as e:
+            print(f"Failed to initialize network: {str(e)}")
+            self.wifi = None
+            
+    def get_wifi(self):
+        """获取WiFi实例"""
+        if self.wifi is None:
+            self._init_wifi()
+        return self.wifi
         
     def get_system_info(self):
         """获取系统信息"""
@@ -135,3 +161,52 @@ class SystemManager:
             },
             'buzzer': 'GP22'
         } 
+        
+    def cleanup_all(self):
+        """全局清理方法，清理所有模块和内存"""
+        print("\n=== Global System Cleanup ===")
+        import sys
+        
+        # 1. 清理已加载的模块
+        print("Cleaning loaded modules...")
+        for module_name in list(sys.modules.keys()):
+            # 清理所有apps和pico下的模块，但保留wifi模块
+            if module_name.startswith(('apps.', 'pico.')) and not module_name.endswith('wifi'):
+                try:
+                    module = sys.modules[module_name]
+                    # 如果模块有cleanup方法，先调用它
+                    if hasattr(module, 'cleanup'):
+                        try:
+                            module.cleanup()
+                        except Exception as e:
+                            print(f"Error cleaning up module {module_name}: {e}")
+                    # 删除模块
+                    del sys.modules[module_name]
+                    print(f"Removed module: {module_name}")
+                except Exception as e:
+                    print(f"Error removing module {module_name}: {e}")
+        
+        # 2. 清理已加载的类实例（保留wifi实例）
+        print("\nCleaning module instances...")
+        for module_name in list(self._modules.keys()):
+            if module_name != 'wifi':  # 保留wifi实例
+                try:
+                    module = self._modules[module_name]
+                    if hasattr(module, 'cleanup'):
+                        try:
+                            module.cleanup()
+                        except Exception as e:
+                            print(f"Error cleaning up instance {module_name}: {e}")
+                    del self._modules[module_name]
+                    print(f"Removed instance: {module_name}")
+                except Exception as e:
+                    print(f"Error removing instance {module_name}: {e}")
+        
+        # 3. 强制垃圾回收
+        print("\nPerforming garbage collection...")
+        gc.collect()
+        
+        # 4. 打印清理后的系统状态
+        print("\nSystem status after cleanup:")
+        self.print_system_info()
+        print("=== Cleanup Complete ===\n") 

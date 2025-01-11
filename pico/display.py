@@ -35,38 +35,6 @@ class PicoDisplay:
         self.bgcolor_group = self.get_bgcolor_group()
         self.text_group = None
         self._cache = {}
-        
-        # 初始化WiFi和Request
-        from pico.wifi import PicoWifi
-        from pico.request import PicoRequest
-        
-        print("Initializing WiFi...")
-        try:
-            self.wifi = PicoWifi()
-            if not self.wifi.is_connected():
-                print("WiFi not connected, attempting to connect...")
-                if not self.wifi.connect():
-                    print("Failed to connect to WiFi")
-                    self.wifi = None
-                    self.request = None
-                    print("Display initialized with no network connection")
-                    return
-                    
-            print("WiFi connected successfully")
-            print("Initializing request client...")
-            try:
-                self.request = PicoRequest(self.wifi.socketpool)
-                print("Request client initialized successfully")
-            except Exception as e:
-                print(f"Failed to initialize request client: {str(e)}")
-                self.request = None
-                self.wifi = None
-                
-        except Exception as e:
-            print(f"Failed to initialize network: {str(e)}")
-            self.wifi = None
-            self.request = None
-            
         print("Display initialized successfully")
 
     def _init_display(self):
