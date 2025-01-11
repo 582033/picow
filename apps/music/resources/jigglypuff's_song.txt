@@ -1,0 +1,23 @@
+# 胖丁之歌 (Jigglypuff's Song)
+# From Pokemon Red & Blue Version
+# Composed by Junichi Masuda
+
+# 第一部分：1531
+C4 0.4  # 1
+G3 0.4  # 5
+E3 0.4  # 3
+C4 0.4  # 1
+
+# 第二部分：2311
+D4 0.4  # 2
+E4 0.4  # 3
+C4 0.4  # 1
+C4 0.4  # 1
+
+# 第三部分：3431
+E4 0.4  # 3
+F4 0.4  # 4
+E4 0.4  # 3
+C4 0.4  # 1
+
+P 0.4  # 休止符
